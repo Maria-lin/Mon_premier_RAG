@@ -17,6 +17,11 @@ CORPUS_CSV = "05_corpus_rag.csv"
 # Nombre de chunks récupérés par question
 TOP_K = 3
 
+# Seuil de distance : au-dela, le meilleur chunk est juge trop eloigne de la
+# question et la reponse est precedee d'un avertissement de fiabilite.
+# Calibre sur la grille de 20 questions : en-corpus <= 0.66, hors-corpus >= 0.75.
+DISTANCE_THRESHOLD = 0.70
+
 # Prompts
 RAG_PROMPT_FILE = "prompts/rag_system.txt"
 MODERATOR_PROMPT_FILE = "prompts/moderator.txt"
