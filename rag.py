@@ -7,7 +7,7 @@ injection, le LLM principal n'est JAMAIS contacté.
 import anthropic
 from dotenv import load_dotenv
 
-from config import LLM_MODEL, RAG_PROMPT_FILE, TOP_K
+from config import DISTANCE_THRESHOLD, LLM_MODEL, RAG_PROMPT_FILE, TOP_K
 from corpus import load_corpus
 from moderator import Moderator
 from vector_db import VectorDB
@@ -57,6 +57,16 @@ class RAG:
             messages=[{"role": "user", "content": question}],
         )
         answer = next(b.text for b in response.content if b.type == "text")
+
+        # Bonus : si meme le meilleur chunk est trop eloigne, on previent
+        # l'utilisateur que la reponse est peu fiable.
+        if chunks and chunks[0]["distance"] > DISTANCE_THRESHOLD:
+            answer = (
+                "⚠️ Avertissement : aucun extrait de la base n'est vraiment proche "
+                "de cette question, la réponse ci-dessous est à prendre avec prudence.\n\n"
+                + answer
+            )
+
         return {"answer": answer, "chunks": chunks, "moderation": decision}
 
 
