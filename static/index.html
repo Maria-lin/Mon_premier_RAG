@@ -21,6 +21,11 @@
   .answer p { margin: 8px 0; }
   .answer ul, .answer ol { margin: 8px 0; padding-left: 24px; }
   .answer li { margin: 4px 0; }
+  .history-header { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; }
+  .history-header h2 { font-size: 1.05rem; margin: 0; color: #444; }
+  #clear-history { background: none; border: 1px solid #bbb; color: #666; padding: 6px 12px; font-size: .85rem; }
+  #clear-history:hover { background: #eee; }
+  .question-label { font-size: .85rem; color: #2d6cdf; font-weight: 600; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -33,6 +38,11 @@
   <button id="send" type="submit">Demander</button>
 </form>
 <p id="status"></p>
+
+<div class="history-header">
+  <h2>Historique de la session</h2>
+  <button id="clear-history" type="button">Effacer l'historique</button>
+</div>
 <div id="result"></div>
 
 <script>
