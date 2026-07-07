@@ -84,13 +84,33 @@ function renderMarkdown(text) {
   return html;
 }
 
+// Construit le bloc HTML d'un echange question/reponse pour l'historique
+function renderExchange(question, data) {
+  const blocked = data.moderation && data.moderation.is_prompt_injection === true;
+
+  let html = `<div class="exchange">
+    <div class="question-label">Q : ${escapeHtml(question)}</div>
+    <div class="card ${blocked ? "blocked" : "ok"}">
+      <strong>${blocked ? "🛑 Question bloquée par le modérateur" : "Réponse"}</strong>
+      <div class="answer">${renderMarkdown(data.answer)}</div>
+    </div>`;
+
+  if (data.chunks && data.chunks.length) {
+    html += `<div class="card"><strong>Sources utilisées (de la plus à la moins pertinente)</strong>` +
+      data.chunks.map(c =>
+        `<p class="chunk">[${c.id}] ${escapeHtml(c.text)} <span class="dist">distance : ${c.distance.toFixed(3)}</span></p>`
+      ).join("") + `</div>`;
+  }
+  return html + `</div>`;
+}
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const question = document.getElementById("question").value;
+  const questionInput = document.getElementById("question");
+  const question = questionInput.value;
   const btn = document.getElementById("send");
   btn.disabled = true;
   status.textContent = "Modération puis recherche en cours...";
-  resultDiv.innerHTML = "";
   try {
     const res = await fetch("/ask", {
       method: "POST",
@@ -99,21 +119,10 @@ form.addEventListener("submit", async (e) => {
     });
     if (!res.ok) throw new Error("Erreur serveur " + res.status);
     const data = await res.json();
-    const blocked = data.moderation && data.moderation.is_prompt_injection === true;
-
-    let html = `<div class="card ${blocked ? "blocked" : "ok"}">
-      <strong>${blocked ? "🛑 Question bloquée par le modérateur" : "Réponse"}</strong>
-      <div class="answer">${renderMarkdown(data.answer)}</div>
-    </div>`;
-
-    if (data.chunks && data.chunks.length) {
-      html += `<div class="card"><strong>Sources utilisées (de la plus à la moins pertinente)</strong>` +
-        data.chunks.map(c =>
-          `<p class="chunk">[${c.id}] ${escapeHtml(c.text)} <span class="dist">distance : ${c.distance.toFixed(3)}</span></p>`
-        ).join("") + `</div>`;
-    }
-    resultDiv.innerHTML = html;
+    // Le nouvel echange s'ajoute en tete de l'historique, sans effacer les precedents
+    resultDiv.insertAdjacentHTML("afterbegin", renderExchange(question, data));
     status.textContent = "";
+    questionInput.value = "";
   } catch (err) {
     status.textContent = "Erreur : " + err.message;
   } finally {
