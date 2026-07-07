@@ -119,7 +119,50 @@ Commits attendus : `feature: rag system prompt with chunk placeholder` puis `fea
 
 Commit : `test: injection and out-of-scope behaviour`.
 
-### 4. Branche `documentation/reponses` — compléter ce README
+### 4. Branche `feature/interface-web` — application web FastAPI
+
+Une petite web app pour tester le RAG depuis le navigateur au lieu du terminal.
+
+- Installer les dépendances et les ajouter à `requirements.txt` :
+
+```bash
+pip install fastapi uvicorn
+```
+
+- `app.py` : application FastAPI avec deux routes :
+  - `GET /` → une page HTML simple avec un champ de question et une zone de réponse ;
+  - `POST /ask` → reçoit `{"question": "..."}`, appelle `rag.answer_question(question)` et retourne `{"answer": ..., "chunks": [...]}` (afficher aussi les chunks utilisés et leurs distances, c'est le bonus « affichage des sources » du PDF).
+
+Squelette de départ :
+
+```python
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+
+from rag import RAG
+
+app = FastAPI(title="Mon premier RAG")
+rag = RAG()  # charge la base, le moderateur et le client une seule fois
+
+class Question(BaseModel):
+    question: str
+
+@app.post("/ask")
+def ask(q: Question):
+    return rag.answer_question(q.question)
+
+@app.get("/", response_class=HTMLResponse)
+def home():
+    return open("static/index.html", encoding="utf-8").read()
+```
+
+- Lancer avec `uvicorn app:app --reload` puis ouvrir http://127.0.0.1:8000.
+- Astuce : faire retourner à `answer_question` un dictionnaire (réponse + chunks + décision du modérateur) plutôt qu'une simple chaîne, pour que l'interface puisse tout afficher.
+
+Commits attendus : `feature: partie 2 - interface web fastapi`.
+
+### 5. Branche `documentation/reponses` — compléter ce README
 
 Ajouter les réponses aux questions du PDF :
 - Qui intercepte la question piégée, et à quel moment exact du pipeline ?
@@ -141,6 +184,9 @@ Ajouter les réponses aux questions du PDF :
 ├── moderator.py          🔜 partie 2
 ├── rag.py                🔜 partie 2
 ├── test_pipeline.py      🔜 partie 2
+├── app.py                🔜 partie 2 (interface web FastAPI)
+├── static/
+│   └── index.html        🔜 partie 2 (page de test)
 ├── prompts/
 │   ├── moderator.txt     🔜 partie 2
 │   └── rag_system.txt    🔜 partie 2
