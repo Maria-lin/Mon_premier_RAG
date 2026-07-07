@@ -1,11 +1,7 @@
-"""Test du retrieval : 5 questions dont on connait le bon chunk.
 
-A lancer AVANT de brancher le LLM : si le bon chunk ne remonte pas en tete,
-le probleme est ici et pas ailleurs.
-"""
 
-from corpus import load_corpus
-from vector_db import VectorDB
+from src.corpus import load_corpus
+from src.vector_db import VectorDB
 
 QUESTIONS = [
     "Quelle est la couleur du chat de Bob ?",

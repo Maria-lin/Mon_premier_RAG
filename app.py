@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from rag import RAG
+from src.rag import RAG
 
 app = FastAPI(title="Mon premier RAG")
 
