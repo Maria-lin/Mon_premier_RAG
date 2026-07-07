@@ -36,10 +36,47 @@ Résultats de la mise à l'épreuve :
 - hors corpus → « je ne sais pas », aucune invention ;
 - affirmation fausse → contradiction signalée avec la version du corpus.
 
-### 🔜 Reste à faire
+### ✅ Réponses aux questions du TP
 
-- Rédiger les réponses aux questions de réflexion du PDF (voir section dédiée plus bas).
-- Bonus éventuels : seuil de distance, comparaison de deux modèles d'embedding.
+**1. Qui intercepte la question piégée, et à quel moment exact du pipeline ?**
+
+L'agent modérateur (`moderator.py`), et c'est le **tout premier maillon** du pipeline : la question lui est soumise avant la recherche dans la base vectorielle et avant tout appel au LLM principal. S'il détecte une injection, `answer_question` retourne immédiatement un refus — le retrieval n'a pas lieu et le LLM principal n'est jamais contacté (0 chunk transmis, vérifié dans `test_pipeline.py`). Cet ordre est une décision de sécurité : on filtre à l'entrée, pas à la sortie.
+
+**2. Que se passerait-il sans agent modérateur ?**
+
+Testé (`test_pipeline.py`, test 2) : la question piégée atteint le LLM principal. Dans notre essai, le prompt système a résisté (le modèle a refusé d'« oublier ses instructions » mais a répondu à la question légitime). Le problème : cette résistance n'est **pas garantie** — elle dépend du modèle, de la formulation de l'attaque, et chaque nouvelle astuce d'injection peut passer. Sans modérateur, la seule ligne de défense est le prompt lui-même. Avec modérateur, l'attaque est bloquée avant même d'exposer le LLM principal : c'est une défense en profondeur.
+
+**3. Pourquoi confier la modération à un modèle/appel dédié plutôt qu'ajouter « refuse les injections » dans le prompt du RAG ?**
+
+- **Séparation des responsabilités** : un appel = une mission. Le modérateur ne fait que classifier (sortie JSON binaire contrôlable) ; le RAG ne fait que répondre. Un prompt unique qui mélange les deux est plus fragile : l'injection s'adresse justement à ce prompt-là.
+- **L'ordre des opérations** : une consigne dans le prompt du RAG agit *pendant* l'appel au LLM principal — l'attaque y est déjà exposée. Le modérateur agit *avant*.
+- **Testabilité** : la décision du modérateur est un booléen qu'on peut tester automatiquement ; « le RAG a-t-il résisté ? » ne se mesure pas aussi proprement.
+
+**4. Quel bug la métadonnée `embedding_model` de la collection rend-elle impossible ?**
+
+Le bug silencieux où la base a été indexée avec un modèle A, mais où les questions sont encodées avec un modèle B (parce que `config.py` a changé entre-temps). Les deux modèles produisent des vecteurs incompatibles : les distances deviennent absurdes, le retrieval retourne n'importe quoi, **sans aucun message d'erreur**. En stockant le nom du modèle dans les métadonnées de la collection et en rechargeant CE modèle-là au démarrage, la cohérence indexation/interrogation est garantie par construction.
+
+**5. Pourquoi normaliser les embeddings (`normalize_embeddings=True`) ?**
+
+Des vecteurs normalisés ont tous une norme de 1 : le produit scalaire entre deux vecteurs devient exactement la similarité cosinus du cours. On compare alors les textes uniquement par leur **direction** (leur sens), pas par leur longueur. Sans normalisation, un texte long pourrait paraître artificiellement « proche » ou « loin » à cause de la magnitude de son vecteur.
+
+**6. Les 5 consignes du prompt système, reformulées, et le problème que chacune prévient**
+
+| Consigne | Reformulation | Problème évité |
+|---|---|---|
+| Tous les chunks ne sont pas forcément utiles | « Trie ce qui est pertinent » | Le retrieval retourne toujours k chunks, même mauvais : sans cette consigne le modèle se croirait obligé de tous les utiliser |
+| Triés du plus au moins pertinent | « Fais confiance au premier d'abord » | Aide à arbitrer quand deux chunks se contredisent ou se recouvrent |
+| Répondre uniquement depuis la base | « Interdiction d'utiliser ta mémoire » | L'hallucination : mélanger les connaissances générales du modèle avec le corpus |
+| Hors périmètre → dire qu'on ne sait pas | « Avoue ton ignorance » | Inventer une réponse plausible sur un sujet absent du corpus (testé : capitale du Japon → refus correct) |
+| Contradiction → la signaler avec la bonne version | « Corrige poliment l'utilisateur » | Que le modèle valide par complaisance une affirmation fausse de l'utilisateur |
+
+### Bonus implémenté : seuil de distance
+
+Si le meilleur chunk est trop éloigné de la question (distance > `DISTANCE_THRESHOLD` dans `config.py`), la réponse est précédée d'un avertissement de fiabilité. **Calibration** : mesurée sur notre grille de 20 questions — les questions dans le corpus obtiennent des meilleures distances entre 0,33 et 0,66 ; la question hors corpus (« capitale du Japon ») obtient 0,75 au mieux. Le seuil est donc fixé à **0,70**, entre les deux populations.
+
+### 🔜 Bonus restant (optionnel)
+
+- Comparaison de deux modèles d'embedding multilingues sur les 5 questions de test.
 
 ## Installation sur un nouveau PC
 
