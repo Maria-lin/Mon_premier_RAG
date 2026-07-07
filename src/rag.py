@@ -7,10 +7,10 @@ injection, le LLM principal n'est JAMAIS contacté.
 import anthropic
 from dotenv import load_dotenv
 
-from config import DISTANCE_THRESHOLD, LLM_MODEL, RAG_PROMPT_FILE, TOP_K
-from corpus import load_corpus
-from moderator import Moderator
-from vector_db import VectorDB
+from .config import DISTANCE_THRESHOLD, LLM_MODEL, RAG_PROMPT_FILE, TOP_K
+from .corpus import load_corpus
+from .moderator import Moderator
+from .vector_db import VectorDB
 
 REFUSAL_MESSAGE = (
     "Question refusée : l'agent modérateur a détecté une tentative de détournement."

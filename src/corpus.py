@@ -5,7 +5,7 @@ Chaque ligne du CSV est un chunk : id, text, source, categorie.
 
 import csv
 
-from config import CORPUS_CSV
+from .config import CORPUS_CSV
 
 
 def load_corpus(csv_path: str = CORPUS_CSV) -> list[dict]:

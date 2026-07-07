@@ -9,7 +9,7 @@ import json
 
 import anthropic
 
-from config import MODERATOR_MODEL, MODERATOR_PROMPT_FILE
+from .config import MODERATOR_MODEL, MODERATOR_PROMPT_FILE
 
 
 class Moderator:

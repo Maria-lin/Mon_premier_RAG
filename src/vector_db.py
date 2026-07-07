@@ -9,7 +9,7 @@ Comportement du constructeur :
 import chromadb
 from sentence_transformers import SentenceTransformer
 
-from config import CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL
+from .config import CHROMA_PATH, COLLECTION_NAME, EMBEDDING_MODEL
 
 
 class VectorDB:
