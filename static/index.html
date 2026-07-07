@@ -45,11 +45,17 @@
   button:hover:not(:disabled) { background: var(--accent-hover); }
   button:active:not(:disabled) { transform: scale(.97); }
   button:disabled { background: #d4d4d8; cursor: wait; }
-  .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
-  .blocked { border-left: 4px solid #d33; }
-  .ok { border-left: 4px solid #2d9d4a; }
-  .chunk { font-size: .9rem; color: #444; margin: 8px 0; }
-  .dist { color: #888; font-size: .8rem; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; margin-bottom: 12px; box-shadow: var(--shadow);
+  }
+  .card strong { display: flex; align-items: center; gap: 6px; font-size: .85rem; letter-spacing: .01em; text-transform: uppercase; }
+  .blocked { border-left: 3px solid var(--danger); }
+  .blocked strong { color: var(--danger); }
+  .ok strong { color: var(--success); }
+  .chunk { font-size: .88rem; color: var(--text-muted); margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .chunk:first-of-type { border-top: none; padding-top: 0; }
+  .dist { color: #a1a1aa; font-size: .78rem; font-variant-numeric: tabular-nums; }
   #status { color: #888; min-height: 1.2em; }
   .answer p { margin: 8px 0; }
   .answer ul, .answer ol { margin: 8px 0; padding-left: 24px; }
