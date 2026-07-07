@@ -20,9 +20,26 @@ Détails importants déjà implémentés :
 - Le **nom du modèle d'embedding est stocké dans les métadonnées de la collection** et relu au rechargement (empêche d'interroger la base avec un mauvais modèle).
 - Le rechargement ne réencode rien (vérifié : 2e lancement instantané).
 
-### 🔜 Partie 2 — À FAIRE (modérateur + RAG + tests)
+### ✅ Partie 2 — TERMINÉE (modérateur + RAG + tests + interface web)
 
-C'est la partie à réaliser sur le deuxième PC (voir instructions ci-dessous).
+| Fichier | Rôle |
+|---|---|
+| `moderator.py` + `prompts/moderator.txt` | Agent modérateur : détecte les injections, sortie JSON forcée par schéma |
+| `rag.py` + `prompts/rag_system.txt` | Pipeline complet : modération → retrieval → prompt à trous → LLM |
+| `test_pipeline.py` | Les 4 tests de la mise à l'épreuve (section 6) — tous validés |
+| `app.py` + `static/index.html` | Interface web FastAPI (`uvicorn app:app --reload` puis http://127.0.0.1:8000) |
+| `questions_test.txt` | Grille d'évaluation : 20 questions notées → score obtenu 19/20 |
+
+Résultats de la mise à l'épreuve :
+- injection → bloquée par le modérateur, le LLM principal n'est jamais appelé ;
+- sans modérateur → le prompt système résiste mais la question est traitée (défense en profondeur nécessaire) ;
+- hors corpus → « je ne sais pas », aucune invention ;
+- affirmation fausse → contradiction signalée avec la version du corpus.
+
+### 🔜 Reste à faire
+
+- Rédiger les réponses aux questions de réflexion du PDF (voir section dédiée plus bas).
+- Bonus éventuels : seuil de distance, comparaison de deux modèles d'embedding.
 
 ## Installation sur un nouveau PC
 
