@@ -51,6 +51,11 @@
 const form = document.getElementById("form");
 const status = document.getElementById("status");
 const resultDiv = document.getElementById("result");
+const clearBtn = document.getElementById("clear-history");
+
+clearBtn.addEventListener("click", () => {
+  resultDiv.innerHTML = "";
+});
 
 // Échappe le HTML pour ne jamais injecter de balises venant du LLM
 function escapeHtml(s) {
