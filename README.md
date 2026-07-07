@@ -10,11 +10,11 @@ Trois briques, chacune dans son fichier :
 
 | Brique | Fichiers | Rôle |
 |---|---|---|
-| Base vectorielle | `vector_db.py` (+ `corpus.py`) | Crée ou recharge une base ChromaDB persistée, encode les chunks avec `distiluse-base-multilingual-cased-v2` (normalisé → similarité cosinus), retrouve les k chunks les plus proches d'une question |
-| Agent modérateur | `moderator.py` + `prompts/moderator.txt` | Détecte les tentatives de prompt injection, sortie JSON forcée par schéma : `{"is_prompt_injection": true/false}` |
-| RAG orchestrateur | `rag.py` + `prompts/rag_system.txt` | Pipeline complet : modération → retrieval (top-3) → prompt système à trous (`{{Chunks}}`) → appel au LLM |
+| Base vectorielle | `src/vector_db.py` (+ `src/corpus.py`) | Crée ou recharge une base ChromaDB persistée, encode les chunks avec `distiluse-base-multilingual-cased-v2` (normalisé → similarité cosinus), retrouve les k chunks les plus proches d'une question |
+| Agent modérateur | `src/moderator.py` + `prompts/moderator.txt` | Détecte les tentatives de prompt injection, sortie JSON forcée par schéma : `{"is_prompt_injection": true/false}` |
+| RAG orchestrateur | `src/rag.py` + `prompts/rag_system.txt` | Pipeline complet : modération → retrieval (top-3) → prompt système à trous (`{{Chunks}}`) → appel au LLM |
 
-S'y ajoutent `config.py` (tous les noms de modèles et chemins à un seul endroit) et les prompts en fichiers texte (un prompt se retravaille sans toucher au code).
+Le cœur du RAG vit dans le package `src/` ; `app.py` et les scripts `test_*.py` restent à la racine, ce sont des points d'entrée qui l'utilisent. S'y ajoutent `src/config.py` (tous les noms de modèles et chemins à un seul endroit) et les prompts en fichiers texte (un prompt se retravaille sans toucher au code).
 
 **Ordre du pipeline = décision de sécurité** : si le modérateur détecte une injection, le LLM principal n'est jamais contacté.
 
@@ -144,12 +144,13 @@ Si le meilleur chunk est trop éloigné de la question (`distance > DISTANCE_THR
 ├── .env.example          modèle du fichier .env à copier
 ├── .gitignore
 ├── requirements.txt
-├── config.py             constantes : modèles, chemins, top-k, seuil
-├── corpus.py             lecture du CSV
-├── vector_db.py          brique 1 : base vectorielle persistante
-├── moderator.py          brique 2 : agent modérateur
-├── rag.py                brique 3 : orchestrateur
-├── app.py                interface web FastAPI
+├── src/                  cœur du RAG (package Python)
+│   ├── config.py         constantes : modèles, chemins, top-k, seuil
+│   ├── corpus.py         lecture du CSV
+│   ├── vector_db.py      brique 1 : base vectorielle persistante
+│   ├── moderator.py      brique 2 : agent modérateur
+│   └── rag.py            brique 3 : orchestrateur
+├── app.py                interface web FastAPI (point d'entrée)
 ├── static/index.html     page de test
 ├── test_retrieval.py     validation du retrieval (5 questions)
 ├── test_pipeline.py      mise à l'épreuve (4 tests de la section 6)
