@@ -56,7 +56,12 @@
   .chunk { font-size: .88rem; color: var(--text-muted); margin: 10px 0 0; padding-top: 10px; border-top: 1px dashed var(--border); }
   .chunk:first-of-type { border-top: none; padding-top: 0; }
   .dist { color: #a1a1aa; font-size: .78rem; font-variant-numeric: tabular-nums; }
-  #status { color: #888; min-height: 1.2em; }
+  #status { color: var(--text-muted); min-height: 1.2em; font-size: .9rem; display: flex; align-items: center; gap: 8px; }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .answer p { margin: 8px 0; }
   .answer ul, .answer ol { margin: 8px 0; padding-left: 24px; }
   .answer li { margin: 4px 0; }
@@ -173,7 +178,7 @@ form.addEventListener("submit", async (e) => {
   const question = questionInput.value;
   const btn = document.getElementById("send");
   btn.disabled = true;
-  status.textContent = "Modération puis recherche en cours...";
+  status.innerHTML = `<span class="spinner"></span> Modération puis recherche en cours...`;
   try {
     const res = await fetch("/ask", {
       method: "POST",
