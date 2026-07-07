@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mon premier RAG</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; background: #f7f7f5; color: #222; }
+  h1 { font-size: 1.4rem; }
+  .hint { color: #666; font-size: .95rem; }
+  form { display: flex; gap: 8px; margin: 20px 0; }
+  input { flex: 1; padding: 10px; font-size: 1rem; border: 1px solid #bbb; border-radius: 6px; }
+  button { padding: 10px 18px; font-size: 1rem; border: none; border-radius: 6px; background: #2d6cdf; color: #fff; cursor: pointer; }
+  button:disabled { background: #999; cursor: wait; }
+  .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
+  .blocked { border-left: 4px solid #d33; }
+  .ok { border-left: 4px solid #2d9d4a; }
+  .chunk { font-size: .9rem; color: #444; margin: 8px 0; }
+  .dist { color: #888; font-size: .8rem; }
+  #status { color: #888; min-height: 1.2em; }
+  .answer p { margin: 8px 0; }
+  .answer ul, .answer ol { margin: 8px 0; padding-left: 24px; }
+  .answer li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<h1>Mon premier RAG — interface de test</h1>
+<p class="hint">Pose une question sur le corpus, par exemple : <em>Quelle est la couleur du chat de Bob ?</em>,
+<em>Qui est le maire de Villebrume ?</em> — ou essaie une injection pour tester le modérateur.</p>
+
+<form id="form">
+  <input id="question" placeholder="Ta question..." autocomplete="off" required>
+  <button id="send" type="submit">Demander</button>
+</form>
+<p id="status"></p>
+<div id="result"></div>
+
+<script>
+const form = document.getElementById("form");
+const status = document.getElementById("status");
+const resultDiv = document.getElementById("result");
+
+// Échappe le HTML pour ne jamais injecter de balises venant du LLM
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Convertit le Markdown de la réponse (gras, italique, listes) en HTML propre
+function renderMarkdown(text) {
+  const lines = escapeHtml(text).split("\n");
+  let html = "", list = null; // list = "ul" | "ol" | null
+
+  const closeList = () => { if (list) { html += `</${list}>`; list = null; } };
+  const inline = (s) => s
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>");
+
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      if (list !== "ul") { closeList(); html += "<ul>"; list = "ul"; }
+      html += `<li>${inline(line.slice(2))}</li>`;
+    } else if (/^\d+[.)]\s/.test(line)) {
+      if (list !== "ol") { closeList(); html += "<ol>"; list = "ol"; }
+      html += `<li>${inline(line.replace(/^\d+[.)]\s/, ""))}</li>`;
+    } else if (line === "") {
+      closeList();
+    } else {
+      closeList();
+      html += `<p>${inline(line)}</p>`;
+    }
+  }
+  closeList();
+  return html;
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const question = document.getElementById("question").value;
+  const btn = document.getElementById("send");
+  btn.disabled = true;
+  status.textContent = "Modération puis recherche en cours...";
+  resultDiv.innerHTML = "";
+  try {
+    const res = await fetch("/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question })
+    });
+    if (!res.ok) throw new Error("Erreur serveur " + res.status);
+    const data = await res.json();
+    const blocked = data.moderation && data.moderation.is_prompt_injection === true;
+
+    let html = `<div class="card ${blocked ? "blocked" : "ok"}">
+      <strong>${blocked ? "🛑 Question bloquée par le modérateur" : "Réponse"}</strong>
+      <div class="answer">${renderMarkdown(data.answer)}</div>
+    </div>`;
+
+    if (data.chunks && data.chunks.length) {
+      html += `<div class="card"><strong>Sources utilisées (de la plus à la moins pertinente)</strong>` +
+        data.chunks.map(c =>
+          `<p class="chunk">[${c.id}] ${escapeHtml(c.text)} <span class="dist">distance : ${c.distance.toFixed(3)}</span></p>`
+        ).join("") + `</div>`;
+    }
+    resultDiv.innerHTML = html;
+    status.textContent = "";
+  } catch (err) {
+    status.textContent = "Erreur : " + err.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>
