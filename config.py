@@ -12,7 +12,7 @@ CHROMA_PATH = "chroma_db"
 COLLECTION_NAME = "corpus_rag"
 
 # Corpus
-CORPUS_CSV = "05_corpus_rag.csv"
+CORPUS_CSV = "data/05_corpus_rag.csv"
 
 # Nombre de chunks récupérés par question
 TOP_K = 3

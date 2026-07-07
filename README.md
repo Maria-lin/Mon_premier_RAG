@@ -20,23 +20,60 @@ S'y ajoutent `config.py` (tous les noms de modèles et chemins à un seul endroi
 
 **Détail important** : le nom du modèle d'embedding est stocké dans les métadonnées de la collection ChromaDB et relu au rechargement — impossible d'interroger la base avec un autre modèle que celui qui l'a indexée.
 
-## Installation
+## Installation (pas à pas, même sans expérience Git/Python)
+
+**Prérequis** : avoir [Python](https://www.python.org/downloads/) (3.10 ou plus récent) et [Git](https://git-scm.com/downloads) installés. Pour vérifier, ouvrir un terminal et taper `python --version` puis `git --version` : si une version s'affiche, c'est bon.
+
+**1. Récupérer le projet**
 
 ```bash
 git clone https://github.com/Maria-lin/Mon_premier_RAG.git
 cd Mon_premier_RAG
+```
+
+**2. Créer un environnement virtuel** (un espace Python isolé pour ce projet, pour ne pas mélanger ses dépendances avec le reste de la machine)
+
+```bash
 python -m venv venv
-venv\Scripts\activate          # Windows (source venv/bin/activate sur Linux/Mac)
+```
+
+**3. Activer l'environnement virtuel** (à refaire à chaque nouvelle session de terminal)
+
+```bash
+venv\Scripts\activate          # Windows
+source venv/bin/activate       # macOS / Linux
+```
+
+Si ça a fonctionné, le terminal affiche `(venv)` au tout début de la ligne.
+
+**4. Installer les dépendances du projet**
+
+```bash
 pip install -r requirements.txt
 ```
 
-Créer un fichier `.env` à la racine (jamais committé, chacun met le sien) :
+Ça installe ChromaDB, sentence-transformers, l'API Anthropic, FastAPI, etc. Peut prendre quelques minutes la première fois.
 
-```
-ANTHROPIC_API_KEY=sk-ant-...
+**5. Créer le fichier `.env` avec sa clé API**
+
+Ce projet a besoin d'une clé API Anthropic pour appeler Claude. Copier le fichier modèle fourni :
+
+```bash
+copy .env.example .env          # Windows
+cp .env.example .env            # macOS / Linux
 ```
 
-La clé se crée sur https://console.anthropic.com. Le modèle d'embedding se télécharge automatiquement au premier lancement (~500 Mo, local et gratuit ensuite).
+Puis ouvrir `.env` et remplacer `sk-ant-votre-cle-ici` par une vraie clé, obtenue gratuitement sur https://console.anthropic.com (rubrique "API Keys").
+
+`.env` est listé dans `.gitignore` : il ne sera jamais envoyé sur GitHub, chacun garde sa propre clé en local.
+
+**6. Vérifier que tout fonctionne**
+
+```bash
+python test_retrieval.py
+```
+
+Le tout premier lancement télécharge le modèle d'embedding (~500 Mo, une seule fois) et construit la base vectorielle dans `chroma_db/` à partir de `data/05_corpus_rag.csv`. Les lancements suivants rechargent cette base instantanément. Si les 5 questions affichent la bonne réponse en tête de liste, l'installation est réussie.
 
 ## Utilisation
 
@@ -103,7 +140,8 @@ Si le meilleur chunk est trop éloigné de la question (`distance > DISTANCE_THR
 ## Structure du projet
 
 ```
-├── .env                  (local, jamais committé)
+├── .env                  (local, jamais committé — voir .env.example)
+├── .env.example          modèle du fichier .env à copier
 ├── .gitignore
 ├── requirements.txt
 ├── config.py             constantes : modèles, chemins, top-k, seuil
@@ -117,7 +155,8 @@ Si le meilleur chunk est trop éloigné de la question (`distance > DISTANCE_THR
 ├── test_pipeline.py      mise à l'épreuve (4 tests de la section 6)
 ├── questions_test.txt    grille d'évaluation (20 questions)
 ├── prompts/              prompts système (hors du code)
-├── 05_corpus_rag.csv     le corpus (200 chunks)
+├── data/
+│   └── 05_corpus_rag.csv le corpus (200 chunks)
 └── chroma_db/            base vectorielle (générée, jamais committée)
 ```
 
