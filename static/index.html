@@ -42,7 +42,7 @@
 <p id="status"></p>
 
 <div class="history-header">
-  <h2>Historique de la session</h2>
+  <h2>Historique de la session <span id="history-count" class="hint"></span></h2>
   <button id="clear-history" type="button">Effacer l'historique</button>
 </div>
 <div id="result"></div>
@@ -52,9 +52,17 @@ const form = document.getElementById("form");
 const status = document.getElementById("status");
 const resultDiv = document.getElementById("result");
 const clearBtn = document.getElementById("clear-history");
+const historyCount = document.getElementById("history-count");
+let exchangeCount = 0;
+
+function updateHistoryCount() {
+  historyCount.textContent = exchangeCount > 0 ? `(${exchangeCount})` : "";
+}
 
 clearBtn.addEventListener("click", () => {
   resultDiv.innerHTML = "";
+  exchangeCount = 0;
+  updateHistoryCount();
 });
 
 // Échappe le HTML pour ne jamais injecter de balises venant du LLM
@@ -128,6 +136,8 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json();
     // Le nouvel echange s'ajoute en tete de l'historique, sans effacer les precedents
     resultDiv.insertAdjacentHTML("afterbegin", renderExchange(question, data));
+    exchangeCount++;
+    updateHistoryCount();
     status.textContent = "";
     questionInput.value = "";
   } catch (err) {
